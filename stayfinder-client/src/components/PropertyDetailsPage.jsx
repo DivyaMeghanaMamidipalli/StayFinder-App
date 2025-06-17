@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { amenityIcons } from '../utils/icons';
 import {ChevronLeft, ChevronRight,Heart,Star,MapPin,User,Users,Home,Wifi, Car, Coffee, Tv} from 'lucide-react';
 
-
+const API_URL = import.meta.env.VITE_API_URL;
 const PropertyDetailsPage = ({selectedListing, setCurrentPage, user,setIsAuthModalOpen,setAuthMode}) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [checkIn, setCheckIn] = useState('');
@@ -23,17 +23,44 @@ const PropertyDetailsPage = ({selectedListing, setCurrentPage, user,setIsAuthMod
       );
     };
 
-    const handleBooking = () => {
+    const handleBooking = async () => {
       if (!checkIn || !checkOut) {
         alert('Please select check-in and check-out dates');
         return;
       }
+
       if (!user) {
         setAuthMode('login');
         setIsAuthModalOpen(true);
         return;
       }
-      alert(`Booking confirmed for ${selectedListing.title}!`);
+
+      try {
+        const res = await fetch(`${API_URL}/api/bookings`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}` // send token
+          },
+          body: JSON.stringify({
+            listingId: selectedListing._id,  // ✅ use listingId
+            checkIn,
+            checkOut,
+            guests
+          })
+                  });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || 'Booking failed');
+        }
+
+        alert(`✅ Booking confirmed for ${selectedListing.title}!`);
+      } catch (err) {
+        console.error(err);
+        alert('❌ Booking failed: ' + err.message);
+      }
     };
 
     return (

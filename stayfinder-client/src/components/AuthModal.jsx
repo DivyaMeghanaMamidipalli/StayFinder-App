@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import {X} from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
+
 const AuthModal = ({isAuthModalOpen, setIsAuthModalOpen, authMode, setAuthMode, setUser}) => {
     const [formData, setFormData] = useState({
       email: '',
@@ -9,18 +12,68 @@ const AuthModal = ({isAuthModalOpen, setIsAuthModalOpen, authMode, setAuthMode, 
       confirmPassword: ''
     });
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
       e.preventDefault();
+
       if (authMode === 'register') {
         if (formData.password !== formData.confirmPassword) {
           alert('Passwords do not match');
           return;
         }
-        setUser({ name: formData.name, email: formData.email });
+
+        try {
+          const res = await fetch(`${API_URL}/api/auth/register`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              name: formData.name,
+              email: formData.email,
+              password: formData.password
+            })
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            throw new Error(data.message || 'Registration failed');
+          }
+
+          setUser(data.user); // server returns { user, token }
+          localStorage.setItem('token', data.token);
+          setIsAuthModalOpen(false);
+        } catch (err) {
+          alert(err.message);
+        }
       } else {
-        setUser({ name: 'John Doe', email: formData.email });
+        try {
+          const res = await fetch(`${API_URL}/api/auth/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              email: formData.email,
+              password: formData.password
+            })
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            throw new Error(data.message || 'Login failed');
+          }
+
+          setUser(data.user);
+          localStorage.setItem('token', data.token);
+          setIsAuthModalOpen(false);
+        } catch (err) {
+          alert(err.message);
+        }
       }
-      setIsAuthModalOpen(false);
+
+      // Clear form
       setFormData({ email: '', password: '', name: '', confirmPassword: '' });
     };
 
