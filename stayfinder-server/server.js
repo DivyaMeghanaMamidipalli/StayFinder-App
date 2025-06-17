@@ -643,7 +643,6 @@ const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`🚀 StayFinder server running on port ${PORT}`);
-  console.log(`📊 Database: ${process.env.MONGODB_URI || 'mongodb://localhost:27017/stayfinder'}`);
 });
 
 module.exports = app;
