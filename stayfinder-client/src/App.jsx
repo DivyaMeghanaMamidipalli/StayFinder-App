@@ -1,10 +1,10 @@
+import StayFinder from "./StayFinder"
+
 function App() {
 
   return (
     <>
-    <div>
-      
-    </div>
+    <StayFinder />
     </>
   )
 }
