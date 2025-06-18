@@ -59,42 +59,6 @@
 
 ---
 
-## 📦 Project Structure
-
-stayfinder/
-├── client/ # Frontend (React + Vite)
-│ ├── components/
-│ ├── pages/
-│ ├── context/
-│ ├── hooks/
-│ └── ...
-├── server/ # Backend (Express + MongoDB)
-│ ├── models/
-│ ├── routes/
-│ ├── middleware/
-│ ├── uploads/
-│ └── server.js
-
-
-## 🧪 Seed Data
-
-To test quickly, use the `/api/seed` endpoint which:
-- Clears existing collections
-- Adds sample users (hosts & guests)
-- Adds listings and demo data
-
----
-
-## 📷 Demo Screenshots
-
-| Homepage | Listing Detail | Payment Modal |
-|----------|----------------|----------------|
-| ![Homepage](screenshots/home.png) | ![Details](screenshots/details.png) | ![Payment](screenshots/payment.png) |
-
-> 📌 _Add your screenshots to the `screenshots/` folder if you'd like to show them._
-
----
-
 ## 🔧 Setup Instructions
 
 ### Prerequisites
@@ -105,7 +69,7 @@ To test quickly, use the `/api/seed` endpoint which:
 ### Environment Variables
 
 Create a `.env` file in the `server/` folder with: Mongo Connection URI
-Create a `.env` file in the `client/` folder with: Backend API KEY, Google Maps Cloud API Key
+Create a `.env` file in the `client/` folder with: Backend API KEY, Google Maps API Key
 
 ### Install & Run
 bash
