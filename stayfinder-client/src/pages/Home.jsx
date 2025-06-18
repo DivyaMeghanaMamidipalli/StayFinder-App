@@ -1,15 +1,29 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { GoogleMap, Marker, useLoadScript } from '@react-google-maps/api';
 import { Search, Filter, XCircle } from 'lucide-react';
 import PropertyCard from '../components/PropertyCard';
 import { AppContext } from '../context/AppContext';
 import { useListings } from '../hooks/useListings';
+
+const mapContainerStyle = {
+  width: '100%',
+  height: '400px',
+};
+
+const centerDefault = {
+  lat: 37.7749,
+  lng: -122.4194,
+};
+
+const GOOGLE_MAPS_API = import.meta.env.VITE_GOOGLE_MAP_API_KEY;
 
 const Home = () => {
   const navigate = useNavigate();
   const { listings, setFilters } = useContext(AppContext);
   const [searchParams, setSearchParams] = useSearchParams();
   const [showFilters, setShowFilters] = useState(false);
+  const [mapCenter, setMapCenter] = useState(centerDefault);
   const [localFilters, setLocalFilters] = useState({
     guests: '',
     location: '',
@@ -18,9 +32,12 @@ const Home = () => {
 
   const location = searchParams.get('location') || '';
 
+  const { isLoaded } = useLoadScript({
+    googleMapsApiKey:GOOGLE_MAPS_API,
+  });
+
   useListings();
 
-  // Filter listings based on search param
   const filteredListings = listings.filter((listing) =>
     listing.location.toLowerCase().includes(location.toLowerCase())
   );
@@ -49,7 +66,24 @@ const Home = () => {
     setFilters({});
     setLocalFilters({ guests: '', location: '', amenities: [] });
     setSearchParams({});
+    setMapCenter(centerDefault);
   };
+
+  const geocodeLocation = useCallback(async () => {
+  if (!location) return;
+  const response = await fetch(
+    `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${GOOGLE_MAPS_API}`
+  );
+  const data = await response.json();
+  if (data.results.length > 0) {
+    const { lat, lng } = data.results[0].geometry.location;
+    setMapCenter({ lat, lng });
+  }
+}, [location]);
+
+  useEffect(() => {
+    geocodeLocation();
+  }, [geocodeLocation]);
 
   const activeFilterCount = [
     localFilters.guests && 1,
@@ -57,32 +91,37 @@ const Home = () => {
     localFilters.amenities.length > 0 && 1,
   ].filter(Boolean).length;
 
-  if (!Array.isArray(listings)) return <div className="p-10 text-center">Loading listings...</div>;
+  if (!isLoaded) return <div className="p-10 text-center">Loading ...</div>;
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-rose-500 to-pink-600 overflow-hidden py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between space-y-8 md:space-y-0">
-          <div className="text-white max-w-2xl">
-            <h1 className="text-4xl md:text-6xl font-bold mb-4">
-              Find Your Perfect Stay
-            </h1>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center space-y-6">
+          <div className="text-white max-w-2xl text-center">
+            <h1 className="text-4xl md:text-6xl font-bold mb-4">Find Your Perfect Stay</h1>
             <p className="text-xl md:text-2xl text-white/90">
               Discover unique places to stay around the world
             </p>
           </div>
-          <div className="w-full md:w-1/2 h-64 md:h-80 rounded-lg overflow-hidden shadow-lg">
-            <iframe
-              title="map"
-              width="100%"
-              height="100%"
-              loading="lazy"
-              allowFullScreen
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.017540795079!2d-122.41941568468108!3d37.774929779759315!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8085809c5b8a68a3%3A0xe4dcf0bd2c97cdae!2sSan+Francisco%2C+CA!5e0!3m2!1sen!2sus!4v1618307909032"
-              className="rounded-lg border-none"
-            ></iframe>
-          </div>
+          {location && (
+            <div className="w-full md:w-2/3 h-64 md:h-96 rounded-lg overflow-hidden shadow-lg">
+              <GoogleMap mapContainerStyle={mapContainerStyle} center={mapCenter} zoom={12}>
+                {filteredListings.map((listing) => {
+                const { lat, lng } = listing;
+                const isValidCoords = typeof lat === 'number' && typeof lng === 'number';
+
+                return isValidCoords ? (
+                    <Marker
+                    key={listing._id}
+                    position={{ lat, lng }}
+                    title={listing.title}
+                    />
+                ) : null;
+                })}
+              </GoogleMap>
+            </div>
+          )}
         </div>
       </div>
 

@@ -2,7 +2,7 @@ import React, { useState, useContext, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ChevronLeft, ChevronRight, Heart, Star, MapPin, User,
-  Users, Home as HomeIcon, Wifi
+  Users, Home as HomeIcon, Wifi,DoorOpen
 } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
 import PaymentModal from '../components/PaymentModal';
@@ -102,7 +102,7 @@ const PropertyDetails = () => {
               <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg mb-6">
                 <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center"><User className="w-6 h-6 text-gray-600" /></div>
                 <div>
-                  <p className="font-semibold text-gray-900">Hosted by {selectedListing.host}</p>
+                  <p className="font-semibold text-gray-900">Hosted by {selectedListing.host.name}</p>
                   <p className="text-sm text-gray-600">Superhost • 2 years hosting</p>
                 </div>
               </div>
@@ -110,7 +110,7 @@ const PropertyDetails = () => {
               <div className="grid grid-cols-3 gap-4 mb-6">
                 <div className="text-center p-4 bg-gray-50 rounded-lg"><Users className="w-6 h-6 mx-auto mb-2 text-gray-600" /><p className="font-semibold">{selectedListing.guests}</p><p className="text-sm text-gray-600">Guests</p></div>
                 <div className="text-center p-4 bg-gray-50 rounded-lg"><HomeIcon className="w-6 h-6 mx-auto mb-2 text-gray-600" /><p className="font-semibold">{selectedListing.bedrooms}</p><p className="text-sm text-gray-600">Bedrooms</p></div>
-                <div className="text-center p-4 bg-gray-50 rounded-lg"><div className="w-6 h-6 mx-auto mb-2 bg-gray-600 rounded" /><p className="font-semibold">{selectedListing.bathrooms}</p><p className="text-sm text-gray-600">Bathrooms</p></div>
+                <div className="text-center p-4 bg-gray-50 rounded-lg"><DoorOpen className="w-6 h-6 mx-auto mb-2 text-gray-600 " /><p className="font-semibold">{selectedListing.bathrooms}</p><p className="text-sm text-gray-600">Bathrooms</p></div>
               </div>
 
               <div className="mb-6">
@@ -123,7 +123,7 @@ const PropertyDetails = () => {
                 <div className="grid grid-cols-2 gap-3">
                   {selectedListing.amenities.map((amenity, index) => (
                     <div key={index} className="flex items-center space-x-3">
-                      <Wifi className="w-4 h-4" />
+                      <Star className="w-4 h-4" />
                       <span className="capitalize">{amenity.replace('_', ' ')}</span>
                     </div>
                   ))}
