@@ -71,19 +71,20 @@
 Create a `.env` file in the `server/` folder with: Mongo Connection URI
 Create a `.env` file in the `client/` folder with: Backend API KEY, Google Maps API Key
 
-### Install & Run
-bash
-Copy
-Edit
+
 # Backend
+```
 cd server
 npm install
 npm run dev
+```
 
 # Frontend
+```
 cd client
 npm install
 npm run dev
+```
 
 
 ### What Has Been Implemented
