@@ -109,9 +109,13 @@ const Home = () => {
       <div className="relative bg-gradient-to-r from-rose-500 to-pink-600 overflow-hidden py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center space-y-6">
           <div className="text-white max-w-2xl text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-4">Find Your Perfect Stay</h1>
+            <h1 className="text-4xl md:text-6xl font-bold mb-4">{user?.role === 'host'
+                ? ''
+                : 'Find Your Perfect Stay'}</h1>
             <p className="text-xl md:text-2xl text-white/90">
-              Discover unique places to stay around the world
+              {user?.role === 'host'
+                ? 'Add Your Properties and rent them accross the World'
+                : 'Discover unique places to stay around the world'}
             </p>
           </div>
           {location && (
