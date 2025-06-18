@@ -7,7 +7,7 @@ import { useListings } from '../hooks/useListings';
 
 const Home = () => {
   const navigate = useNavigate();
-  const { listings, filters, setFilters } = useContext(AppContext);
+  const { listings, setFilters } = useContext(AppContext);
   const [searchParams, setSearchParams] = useSearchParams();
   const [showFilters, setShowFilters] = useState(false);
   const [localFilters, setLocalFilters] = useState({
@@ -18,7 +18,6 @@ const Home = () => {
 
   const location = searchParams.get('location') || '';
 
-  // Trigger listing fetch based on filters
   useListings();
 
   // Filter listings based on search param

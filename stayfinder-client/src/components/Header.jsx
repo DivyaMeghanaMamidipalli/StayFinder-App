@@ -9,7 +9,6 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, setUser, setIsAuthModalOpen, setAuthMode } = useContext(AppContext);
   const [searchParams, setSearchParams] = useSearchParams();
-  const searchValue = searchParams.get('location') || '';
   const locationSearch = searchParams.get('location') || '';
 
   return (
