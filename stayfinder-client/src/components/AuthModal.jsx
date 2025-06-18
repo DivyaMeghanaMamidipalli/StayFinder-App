@@ -9,6 +9,7 @@ const AuthModal = () => {
     isAuthModalOpen,
     setIsAuthModalOpen,
     authMode,
+    setToken,
     setAuthMode,
     setUser
   } = useContext(AppContext);
@@ -39,8 +40,8 @@ const AuthModal = () => {
     try {
       const endpoint = authMode === 'login' ? 'login' : 'register';
       const payload = authMode === 'login'
-        ? { email, password }
-        : { name, email, password };
+        ? { email: email.toLowerCase(), password }
+        : { name, email: email.toLowerCase(), password };
 
       const res = await fetch(`${API_URL}/api/auth/${endpoint}`, {
         method: 'POST',
@@ -67,6 +68,7 @@ const AuthModal = () => {
 
       setUser(data.user);
       localStorage.setItem('token', data.token);
+      setToken(data.token);
       setIsAuthModalOpen(false);
       setFormData({ email: '', password: '', name: '', confirmPassword: '' });
     } catch (err) {

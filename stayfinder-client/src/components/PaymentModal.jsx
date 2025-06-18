@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { AppContext } from '../context/AppContext';
 
-const PaymentModal = ({ isOpen, onClose, property }) => {
+const API_URL = import.meta.env.VITE_API_URL;
+
+const PaymentModal = ({ isOpen, onClose, property, checkIn, checkOut, guests }) => {
   const navigate = useNavigate();
+  const { token } = useContext(AppContext);
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvv, setCvv] = useState('');
@@ -11,17 +15,12 @@ const PaymentModal = ({ isOpen, onClose, property }) => {
   const [error, setError] = useState('');
 
   const formatCardNumber = (value) => {
-    return value
-      .replace(/\D/g, '')
-      .replace(/(.{4})/g, '$1 ')
-      .trim()
-      .slice(0, 19); // "1234 5678 9012 3456"
+    return value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim().slice(0, 19);
   };
 
   const formatExpiry = (value) => {
     const cleaned = value.replace(/\D/g, '').slice(0, 4);
-    if (cleaned.length < 3) return cleaned;
-    return cleaned.slice(0, 2) + '/' + cleaned.slice(2);
+    return cleaned.length < 3 ? cleaned : cleaned.slice(0, 2) + '/' + cleaned.slice(2);
   };
 
   const isValidCard = (number) => {
@@ -40,7 +39,7 @@ const PaymentModal = ({ isOpen, onClose, property }) => {
     return sum % 10 === 0;
   };
 
-  const handlePayment = (e) => {
+  const handlePayment = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -63,12 +62,38 @@ const PaymentModal = ({ isOpen, onClose, property }) => {
 
     setIsProcessing(true);
 
-    setTimeout(() => {
+    try {
+      const res = await fetch(`${API_URL}/api/bookings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          listingId: property._id,
+          checkIn,
+          checkOut,
+          guests,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || 'Booking failed');
+        setIsProcessing(false);
+        return;
+      }
+
+      // Success
       setIsProcessing(false);
       onClose();
-      const fakeBookingId = Math.floor(100000 + Math.random() * 900000);
-      navigate(`/booking-confirmation/${fakeBookingId}`);
-    }, 2000);
+      navigate(`/booking-confirmation/${data.booking._id}`);
+    } catch (err) {
+      console.error(err);
+      setError('Something went wrong');
+      setIsProcessing(false);
+    }
   };
 
   if (!isOpen) return null;

@@ -21,6 +21,7 @@ const PropertyDetails = () => {
   const [checkOut, setCheckOut] = useState('');
   const [guests, setGuests] = useState(1);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [formError, setFormError] = useState('');
 
   useEffect(() => {
     if (!selectedListing) {
@@ -41,7 +42,7 @@ const PropertyDetails = () => {
 
   const handleBooking = () => {
     if (!checkIn || !checkOut) {
-      alert('Please select check-in and check-out dates');
+      setFormError('Please select check-in and check-out dates');
       return;
     }
 
@@ -50,7 +51,7 @@ const PropertyDetails = () => {
       setIsAuthModalOpen(true);
       return;
     }
-
+    setFormError('');
     setIsPaymentOpen(true);
   };
 
@@ -62,7 +63,7 @@ const PropertyDetails = () => {
           className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-6"
         >
           <ChevronLeft className="w-5 h-5" />
-          <span>Back to listings</span>
+          <span>Back to Properties</span>
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -165,6 +166,9 @@ const PropertyDetails = () => {
                 <button onClick={handleBooking} className="w-full bg-rose-500 hover:bg-rose-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
                   {user ? 'Reserve' : 'Login to Book'}
                 </button>
+                {formError && (
+                  <p className="mt-2 text-sm text-red-600 font-medium">{formError}</p>
+                )}
 
                 {nights > 0 && (
                   <div className="mt-4 pt-4 border-t border-gray-200">
@@ -187,8 +191,14 @@ const PropertyDetails = () => {
           </div>
         </div>
       </div>
-
-      <PaymentModal isOpen={isPaymentOpen} onClose={() => setIsPaymentOpen(false)} property={selectedListing} />
+      <PaymentModal
+        isOpen={isPaymentOpen}
+        onClose={() => setIsPaymentOpen(false)}
+        property={selectedListing}
+        checkIn={checkIn}
+        checkOut={checkOut}
+        guests={guests}
+      />
     </div>
   );
 };

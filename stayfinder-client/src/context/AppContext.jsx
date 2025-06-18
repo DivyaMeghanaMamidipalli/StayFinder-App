@@ -1,4 +1,4 @@
-import  { createContext, useState} from 'react';
+import  { useEffect,createContext, useState} from 'react';
 
 export const AppContext = createContext();
 
@@ -7,9 +7,27 @@ export const AppProvider = ({ children }) => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState('login');
   const [listings, setListings] = useState([]);
+  const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [filters, setFilters] = useState({});
   const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    const savedToken = localStorage.getItem('token');
+    if (savedToken) {
+      setToken(savedToken);
 
+      fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${savedToken}`,
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => setUser(data))
+        .catch(() => {
+          localStorage.removeItem('token');
+          setToken(null);
+        });
+    }
+  }, []);
   
 
   return (
@@ -17,6 +35,8 @@ export const AppProvider = ({ children }) => {
       value={{
         user,
         setUser,
+        token,
+        setToken,
         isAuthModalOpen,
         setIsAuthModalOpen,
         authMode,

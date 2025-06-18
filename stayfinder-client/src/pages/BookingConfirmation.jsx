@@ -8,7 +8,6 @@ const BookingConfirmation = () => {
     <div className="max-w-3xl mx-auto py-10 px-4">
       <h1 className="text-2xl font-bold mb-4">Booking Confirmed!</h1>
       <p className="text-gray-700 mb-2">Booking ID: {bookingId}</p>
-      <p className="text-gray-700">A confirmation email has been sent with your check-in details.</p>
     </div>
   );
 };

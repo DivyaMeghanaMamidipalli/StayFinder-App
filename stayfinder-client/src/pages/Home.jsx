@@ -20,7 +20,7 @@ const GOOGLE_MAPS_API = import.meta.env.VITE_GOOGLE_MAP_API_KEY;
 
 const Home = () => {
   const navigate = useNavigate();
-  const { listings, setFilters } = useContext(AppContext);
+  const { listings, setFilters, user } = useContext(AppContext);
   const [searchParams, setSearchParams] = useSearchParams();
   const [showFilters, setShowFilters] = useState(false);
   const [mapCenter, setMapCenter] = useState(centerDefault);
@@ -33,14 +33,24 @@ const Home = () => {
   const location = searchParams.get('location') || '';
 
   const { isLoaded } = useLoadScript({
-    googleMapsApiKey:GOOGLE_MAPS_API,
+    googleMapsApiKey: GOOGLE_MAPS_API,
   });
 
   useListings();
 
-  const filteredListings = listings.filter((listing) =>
-    listing.location.toLowerCase().includes(location.toLowerCase())
-  );
+  const filteredListings = listings.filter((listing) => {
+    const matchesLocation = listing.location.toLowerCase().includes(location.toLowerCase());
+
+    const hostId =
+      typeof listing.host === 'object' && listing.host !== null
+        ? listing.host._id
+        : listing.host;
+
+    const isOwner = user?.role === 'host' ? hostId === user.id : true;
+
+    return matchesLocation && isOwner;
+  });
+
 
   const handleAmenityChange = (e) => {
     const amenity = e.target.value;
@@ -70,16 +80,16 @@ const Home = () => {
   };
 
   const geocodeLocation = useCallback(async () => {
-  if (!location) return;
-  const response = await fetch(
-    `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${GOOGLE_MAPS_API}`
-  );
-  const data = await response.json();
-  if (data.results.length > 0) {
-    const { lat, lng } = data.results[0].geometry.location;
-    setMapCenter({ lat, lng });
-  }
-}, [location]);
+    if (!location) return;
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${GOOGLE_MAPS_API}`
+    );
+    const data = await response.json();
+    if (data.results.length > 0) {
+      const { lat, lng } = data.results[0].geometry.location;
+      setMapCenter({ lat, lng });
+    }
+  }, [location]);
 
   useEffect(() => {
     geocodeLocation();
@@ -108,16 +118,15 @@ const Home = () => {
             <div className="w-full md:w-2/3 h-64 md:h-96 rounded-lg overflow-hidden shadow-lg">
               <GoogleMap mapContainerStyle={mapContainerStyle} center={mapCenter} zoom={12}>
                 {filteredListings.map((listing) => {
-                const { lat, lng } = listing;
-                const isValidCoords = typeof lat === 'number' && typeof lng === 'number';
-
-                return isValidCoords ? (
+                  const { lat, lng } = listing;
+                  const isValidCoords = typeof lat === 'number' && typeof lng === 'number';
+                  return isValidCoords ? (
                     <Marker
-                    key={listing._id}
-                    position={{ lat, lng }}
-                    title={listing.title}
+                      key={listing._id}
+                      position={{ lat, lng }}
+                      title={listing.title}
                     />
-                ) : null;
+                  ) : null;
                 })}
               </GoogleMap>
             </div>
@@ -130,8 +139,13 @@ const Home = () => {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              {location ? `Search results for "${location}"` : 'Featured Stays'}
+              {user?.role === 'host'
+                ? 'Your Properties'
+                : location
+                ? `Search results for "${location}"`
+                : 'Featured Stays'}
             </h2>
+
             <p className="text-gray-600">{filteredListings.length} properties available</p>
           </div>
           <div className="flex items-center gap-4">

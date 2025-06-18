@@ -13,18 +13,17 @@ export const useListings = () => {
         const res = await fetch(`${API_URL}/api/listings?${query}`);
         const data = await res.json();
 
-        // ✅ Ensure data is an array
         if (Array.isArray(data)) {
           setListings(data);
         } else if (Array.isArray(data.listings)) {
           setListings(data.listings);
         } else {
           console.error('API returned unexpected structure:', data);
-          setListings([]); // fallback to empty array
+          setListings([]); 
         }
       } catch (err) {
         console.error('Failed to fetch listings', err);
-        setListings([]); // fallback to empty array
+        setListings([]); 
       }
       setLoading(false);
     };

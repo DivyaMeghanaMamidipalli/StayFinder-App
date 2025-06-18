@@ -110,9 +110,10 @@ const upload = multer({ storage: storage });
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { name, email, password, role = 'guest' } = req.body;
+    const normalizedEmail=email.toLowerCase();
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email:normalizedEmail });
     if (existingUser) {
       return res.status(400).json({ error: 'User already exists' });
     }
@@ -124,7 +125,7 @@ app.post('/api/auth/register', async (req, res) => {
     // Create user
     const user = new User({
       name,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
       role
     });
@@ -157,9 +158,10 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = email.toLowerCase();
 
     // Find user
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email : normalizedEmail });
     if (!user) {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
@@ -528,6 +530,25 @@ app.get('/api/host/bookings', authenticateToken, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+//Promote a user to a host route
+// Promote user to host
+app.patch('/api/users/promote', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    if (user.role === 'host') return res.status(400).json({ error: 'Already a host' });
+
+    user.role = 'host';
+    await user.save();
+
+    res.json({ message: 'User promoted to host', user: { id: user._id, name: user.name, role: user.role } });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 // SEED DATA (for development)
 app.post('/api/seed', async (req, res) => {
