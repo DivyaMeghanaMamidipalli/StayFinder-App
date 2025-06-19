@@ -24,7 +24,7 @@ const PropertyCard = ({ listing }) => {
   return (
     <div
       className="group cursor-pointer bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-      onClick={() => navigate(`/property/${listing._id}`)}
+      onClick={() => navigate(`/property/${listing._id || listing.id}`)}
     >
       <div className="relative">
         <div className="aspect-[4/3] overflow-hidden">

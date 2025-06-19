@@ -14,7 +14,9 @@ const PropertyDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const selectedListing = listings.find(listing => listing._id === id);
+  const selectedListing = listings.find(
+    (listing) => listing._id === id || String(listing.id) === id
+  );
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [checkIn, setCheckIn] = useState('');
@@ -103,7 +105,7 @@ const PropertyDetails = () => {
               <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg mb-6">
                 <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center"><User className="w-6 h-6 text-gray-600" /></div>
                 <div>
-                  <p className="font-semibold text-gray-900">Hosted by {selectedListing.host.name}</p>
+                  <p className="font-semibold text-gray-900">Hosted by {selectedListing.host.name || selectedListing.host}</p>
                   <p className="text-sm text-gray-600">Superhost • 2 years hosting</p>
                 </div>
               </div>

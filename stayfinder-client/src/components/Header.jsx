@@ -15,6 +15,7 @@ const Header = () => {
 
 
   const handleLogout = () => {
+    setIsMenuOpen(false)
     localStorage.removeItem('token');
     setUser(null);
     setToken(null);
@@ -152,22 +153,22 @@ const Header = () => {
         <div className="md:hidden bg-white border-t border-gray-200">
           <div className="px-4 py-4 space-y-3">
             {user?.role === 'host' ? (
-              <button className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => navigate('/host')}>
+              <button className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => {navigate('/host'); setIsMenuOpen(false);}}>
                 Add Property
               </button>
             ) : (
-              <button className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => navigate('/become-host')}>
+              <button className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => {navigate('/become-host'); setIsMenuOpen(false);}}>
                 Become a Host
               </button>
             )}
 
             {user ? (
               <>
-                <button className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => navigate('/bookings')}>
+                <button className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() =>{ navigate('/bookings'); setIsMenuOpen(false);}}>
                   View Bookings
                 </button>
                 {user.role === 'host' && (
-                  <button className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => navigate('/host')}>
+                  <button className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => {navigate('/host'); setIsMenuOpen(false);}}>
                     Manage Properties
                   </button>
                 )}

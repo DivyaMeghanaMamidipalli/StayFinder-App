@@ -1,5 +1,6 @@
 import { useEffect, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
+import {mockListings} from '../data/mockListings';
 
 const API_URL = import.meta.env.VITE_API_URL;
 export const useListings = () => {
@@ -11,6 +12,10 @@ export const useListings = () => {
       try {
         const query = new URLSearchParams(filters).toString();
         const res = await fetch(`${API_URL}/api/listings?${query}`);
+
+        // If server is running but returns error (like 500, 404), still throw
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+
         const data = await res.json();
 
         if (Array.isArray(data)) {
@@ -18,14 +23,21 @@ export const useListings = () => {
         } else if (Array.isArray(data.listings)) {
           setListings(data.listings);
         } else {
-          console.error('API returned unexpected structure:', data);
-          setListings([]); 
+          console.error('Unexpected data structure from API:', data);
+          setListings([]);
         }
       } catch (err) {
-        console.error('Failed to fetch listings', err);
-        setListings([]); 
+        // Only show mock data if the server is NOT reachable (network error)
+        if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError') || err.message.includes('ERR_CONNECTION_REFUSED')) {
+          console.warn('Server is offline — showing mock data');
+          setListings(mockListings);
+        } else {
+          console.error('Error fetching listings:', err.message);
+          setListings([]); // Don't show mock data on server-side errors
+        }
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchListings();

@@ -37,6 +37,7 @@ const Home = () => {
   });
 
   useListings();
+  console.log("Data:", listings);
 
   const filteredListings = listings.filter((listing) => {
     const matchesLocation = listing.location.toLowerCase().includes(location.toLowerCase());
@@ -225,9 +226,9 @@ const Home = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredListings.map((listing) => (
             <PropertyCard
-              key={listing._id}
+              key={listing._id || listing.id}
               listing={listing}
-              onClick={() => navigate(`/property/${listing._id}`)}
+              onClick={() => navigate(`/property/${listing._id  || listing.id}`)}
             />
           ))}
         </div>
