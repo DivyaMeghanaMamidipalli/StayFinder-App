@@ -4,7 +4,7 @@
 
 
 # Deployment Link 
-- https://stay-finder-app-xi.vercel.app/](https://stay-finder-bm2uamg4c-divya-meghanas-projects.vercel.app/
+- https://stay-finder-bm2uamg4c-divya-meghanas-projects.vercel.app/
   
 
 
