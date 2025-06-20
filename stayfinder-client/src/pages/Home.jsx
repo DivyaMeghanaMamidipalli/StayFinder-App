@@ -45,12 +45,10 @@ const Home = () => {
   useListings();
 
   const filteredListings = listings.filter((listing) => {
-      // If user is a host and is in 'host view' mode, only show their properties.
       if (user?.role === 'host' && viewMode === 'host') {
         const hostId = typeof listing.host === 'object' && listing.host !== null ? listing.host._id : listing.host;
         return hostId === user.id;
       }
-      // Otherwise, for guests or hosts in normal view, show all listings from backend.
       return true;
     });
 
@@ -65,8 +63,6 @@ const Home = () => {
   };
 
   const applyFilters = () => {
-    // We only set the location in the URL search params for simplicity and geocoding.
-    // All other filters are passed to the context, which the useListings hook will use.
     setSearchParams(localFilters.location ? { location: localFilters.location } : {});
     
     setFilters({
@@ -99,7 +95,6 @@ const Home = () => {
 
   const geocodeLocation = useCallback(async () => {
     if (!location) {
-        // When clearing filters, reset map to default
         setMapCenter(centerDefault);
         return;
     };
@@ -120,8 +115,14 @@ const Home = () => {
   useEffect(() => {
     geocodeLocation();
   }, [geocodeLocation]);
+
+  useEffect(() => {
+    setFilters(prevFilters => ({
+      ...prevFilters,
+      location: location,
+    }));
+  }, [location, setFilters]); 
   
-  // Keep track of the number of *applied* filters, not just local ones
   const { guests, amenities, startDate, endDate, minPrice, maxPrice } = useContext(AppContext).filters;
   const activeFilterCount = [
     guests,
@@ -136,7 +137,6 @@ const Home = () => {
 
   if (!isLoaded) return <div className="p-10 text-center">Loading ...</div>;
 
-  // --- MAP COMPONENT to avoid repetition ---
   const MapComponent = () => (
     <GoogleMap mapContainerStyle={mapContainerStyle} center={mapCenter} zoom={location ? 12 : 9}>
       {filteredListings.map((listing) => {
@@ -161,7 +161,7 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section - Map is REMOVED from here */}
+      {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-rose-500 to-pink-600 overflow-hidden py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center space-y-6">
           <div className="text-white max-w-2xl text-center">
@@ -174,16 +174,12 @@ const Home = () => {
                 : 'Discover unique places to stay around the world.'}
             </p>
           </div>
-          {/* MAP IS NO LONGER HERE */}
         </div>
       </div>
 
-      {/* --- NEW LAYOUT: Filters, Listings, and Map --- */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* --- Flex container for side-by-side layout on desktop --- */}
         <div className="flex flex-col lg:flex-row lg:gap-8">
           
-          {/* --- LEFT COLUMN: Filters and Listings --- */}
           <div className={`w-full ${location ? 'lg:w-3/5 xl:w-2/3' : ''}`}>
             <div className="flex items-center justify-between mb-6">
               <div>
@@ -227,7 +223,6 @@ const Home = () => {
             {showFilters && (
               <div className="mb-6 p-6 border border-gray-200 rounded-lg bg-white shadow-sm space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {/* Location & Guests */}
                   <div className="xl:col-span-1">
                     <label className="block mb-2 text-sm font-medium">Location</label>
                     <input type="text" value={localFilters.location} onChange={(e) => setLocalFilters({ ...localFilters, location: e.target.value })} placeholder="e.g. San Francisco" className="w-full px-3 py-2 border rounded-md" />
@@ -236,7 +231,6 @@ const Home = () => {
                     <label className="block mb-2 text-sm font-medium">Guests</label>
                     <input type="number" min="1" value={localFilters.guests} onChange={(e) => setLocalFilters({ ...localFilters, guests: e.target.value })} placeholder="Any" className="w-full px-3 py-2 border rounded-md" />
                   </div>
-                   {/* Date Filters */}
                   <div className="sm:col-span-2 lg:col-span-2 xl:col-span-1 grid grid-cols-2 gap-2">
                       <div>
                         <label className="block mb-2 text-sm font-medium">Check-in</label>
@@ -247,7 +241,6 @@ const Home = () => {
                         <input type="date" min={localFilters.startDate} value={localFilters.endDate} onChange={(e) => setLocalFilters({ ...localFilters, endDate: e.target.value })} className="w-full px-3 py-2 border rounded-md text-gray-600" />
                       </div>
                   </div>
-                  {/* Price Filters */}
                   <div className="sm:col-span-2 lg:col-span-2 xl:col-span-3 grid grid-cols-2 gap-2">
                       <div>
                         <label className="block mb-2 text-sm font-medium">Min Price</label>
@@ -259,7 +252,6 @@ const Home = () => {
                       </div>
                   </div>
                 </div>
-                {/* Amenities Filter */}
                 <div className="pt-4 border-t">
                   <label className="block mb-2 text-sm font-medium">Amenities</label>
                   <div className="flex flex-wrap gap-x-4 gap-y-2">
@@ -306,7 +298,6 @@ const Home = () => {
             )}
           </div>
 
-          {/* --- RIGHT COLUMN: Desktop Map (Sticky) --- */}
           {location && (
               <div className="hidden lg:block w-2/5 xl:w-1/3">
                 <div className="sticky top-24 h-[calc(100vh-7rem)] rounded-lg overflow-hidden shadow-lg">

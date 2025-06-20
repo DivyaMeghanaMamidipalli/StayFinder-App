@@ -33,7 +33,7 @@ export const useListings = () => {
           setListings(mockListings);
         } else {
           console.error('Error fetching listings:', err.message);
-          setListings([]); // Don't show mock data on server-side errors
+          setListings([]); 
         }
       } finally {
         setLoading(false);
