@@ -38,6 +38,31 @@ const Bookings = () => {
   if (loading) return <div className="p-6">Loading bookings...</div>;
   if (error) return <div className="p-6 text-red-600">{error}</div>;
   if (bookings.length === 0) return <div className="p-6">No bookings found.</div>;
+  const handleCancel = async (bookingId) => {
+  try {
+    const res = await fetch(`${API_URL}/api/bookings/${bookingId}/cancel`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to cancel booking');
+
+    setBookings((prev) =>
+        prev.map((booking) =>
+          booking._id === bookingId 
+            ? { ...booking, status: 'cancelled' } 
+            : booking
+        )
+      );
+  } catch (err) {
+    alert(`Error: ${err.message}`);
+  }
+};
+
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -58,7 +83,16 @@ const Bookings = () => {
             <p className="text-sm text-gray-600">
               Guests: {booking.guests} | Status: {booking.status}
             </p>
+            {user.role !== 'host' && booking.status !== 'cancelled' && (
+            <button
+              onClick={() => handleCancel(booking._id)}
+              className="mt-2 px-4 py-1 bg-red-500 hover:bg-red-600 text-white text-sm rounded"
+            >
+              Cancel Booking
+            </button>
+          )}
           </li>
+          
         ))}
       </ul>
     </div>

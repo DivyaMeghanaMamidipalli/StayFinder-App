@@ -11,7 +11,22 @@ require('dotenv').config();
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+}));
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    return res.sendStatus(200);
+  }
+  next();
+});
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
@@ -26,6 +41,8 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/stayfinde
 .catch((err) => {
   console.error('❌ MongoDB connection error:', err.message);
 });
+
+
 
 // User Schema
 const userSchema = new mongoose.Schema({
@@ -391,12 +408,18 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
     // Validate dates
     const checkInDate = new Date(checkIn);
     const checkOutDate = new Date(checkOut);
+    const today= new Date();
+    today.setHours(0,0,0,0);
 
     if (checkInDate >= checkOutDate) {
       return res.status(400).json({ error: 'Check-out date must be after check-in date' });
     }
+    
+    if (checkInDate < today) {
+      return res.status(400).json({ error: 'Check-in date cannot be in the past' });
+    }
 
-    if (checkInDate < new Date()) {
+    if (checkOutDate<today){
       return res.status(400).json({ error: 'Check-in date cannot be in the past' });
     }
 

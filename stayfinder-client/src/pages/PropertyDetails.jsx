@@ -13,6 +13,8 @@ const PropertyDetails = () => {
   const { listings, user, setIsAuthModalOpen, setAuthMode } = useContext(AppContext);
   const { id } = useParams();
   const navigate = useNavigate();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   const selectedListing = listings.find(
     (listing) => listing._id === id || String(listing.id) === id
