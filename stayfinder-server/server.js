@@ -87,6 +87,11 @@ const Booking = mongoose.model('Booking', bookingSchema);
 
 // Middleware to verify JWT token
 const authenticateToken = (req, res, next) => {
+  // Allow preflight OPTIONS requests to pass through without authentication
+  if (req.method === 'OPTIONS') {
+    return next();
+  }
+
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
@@ -96,6 +101,9 @@ const authenticateToken = (req, res, next) => {
 
   jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret', (err, user) => {
     if (err) {
+      if (err.name === 'TokenExpiredError') {
+        return res.status(401).json({ error: 'Token expired' });
+      }
       return res.status(403).json({ error: 'Invalid token' });
     }
     req.user = user;
