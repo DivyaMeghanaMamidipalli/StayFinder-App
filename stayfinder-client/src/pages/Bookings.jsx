@@ -12,8 +12,7 @@ const Bookings = () => {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const endpoint =
-          user.role === 'host' ? '/api/host/bookings' : '/api/bookings';
+        const endpoint = '/api/bookings';
 
         const res = await fetch(`${API_URL}${endpoint}`, {
           headers: {
@@ -83,7 +82,7 @@ const Bookings = () => {
             <p className="text-sm text-gray-600">
               Guests: {booking.guests} | Status: {booking.status}
             </p>
-            {user.role !== 'host' && booking.status !== 'cancelled' && (
+            { booking.status !== 'cancelled' && (
             <button
               onClick={() => handleCancel(booking._id)}
               className="mt-2 px-4 py-1 bg-red-500 hover:bg-red-600 text-white text-sm rounded"

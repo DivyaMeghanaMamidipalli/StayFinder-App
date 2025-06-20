@@ -36,6 +36,7 @@ const Home = () => {
   });
 
   const location = searchParams.get('location') || '';
+  const viewMode = searchParams.get('view');
 
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: GOOGLE_MAPS_API,
@@ -44,24 +45,14 @@ const Home = () => {
   useListings();
 
   const filteredListings = listings.filter((listing) => {
-    // Note: The primary filtering now happens on the backend.
-    // This client-side filter is mainly for the host's view.
-    const hostId =
-      typeof listing.host === 'object' && listing.host !== null
-        ? listing.host._id
-        : listing.host;
-
-    const isOwner = user?.role === 'host' ? hostId === user.id : true;
-
-    // For guests, we show all listings returned from the backend.
-    if (user?.role !== 'host') {
+      // If user is a host and is in 'host view' mode, only show their properties.
+      if (user?.role === 'host' && viewMode === 'host') {
+        const hostId = typeof listing.host === 'object' && listing.host !== null ? listing.host._id : listing.host;
+        return hostId === user.id;
+      }
+      // Otherwise, for guests or hosts in normal view, show all listings from backend.
       return true;
-    }
-    
-    // For hosts, we apply an additional location filter on the client side if they are searching their own listings.
-    const matchesLocation = listing.location.toLowerCase().includes(location.toLowerCase());
-    return matchesLocation && isOwner;
-  });
+    });
 
   const handleAmenityChange = (e) => {
     const amenity = e.target.value;
@@ -162,6 +153,12 @@ const Home = () => {
     </GoogleMap>
   );
 
+  const handleShowAll = () => {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('view');
+      setSearchParams(newParams);
+    };                          
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section - Map is REMOVED from here */}
@@ -191,7 +188,7 @@ const Home = () => {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  {user?.role === 'host'
+                  {user?.role === 'host' && viewMode === 'host'
                     ? 'Your Properties'
                     : location
                     ? `Stays in "${location}"`
@@ -207,6 +204,14 @@ const Home = () => {
                   <Filter className="w-4 h-4" />
                   <span>Filters {activeFilterCount > 0 && `(${activeFilterCount})`}</span>
                 </button>
+                {user?.role === 'host' && viewMode === 'host' && (
+                      <button
+                        onClick={handleShowAll}
+                        className="px-4 py-2 text-sm bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-200"
+                      >
+                        Show All Properties
+                      </button>
+                  )}
                 {activeFilterCount > 0 && (
                   <button
                     onClick={clearFilters}

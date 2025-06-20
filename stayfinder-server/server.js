@@ -511,13 +511,34 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
 });
 
 // Get user's bookings
+// Get all bookings relevant to the current user (as guest or as host)
 app.get('/api/bookings', authenticateToken, async (req, res) => {
   try {
-    const bookings = await Booking.find({ guest: req.user.userId })
-      .populate('listing', 'title location images price')
+    let query;
+    if (req.user.role === 'host') {
+      const hostListings = await Listing.find({ host: req.user.userId }).select('_id');
+      const listingIds = hostListings.map(listing => listing._id);
+      
+      query = {
+        $or: [
+          { guest: req.user.userId }, 
+          { listing: { $in: listingIds } }
+        ]
+      };
+
+    } else {
+      query = { guest: req.user.userId };
+    }
+
+    const bookings = await Booking.find(query)
+      .populate('listing', 'title location images price host') 
+      .populate('guest', 'name email') 
       .sort({ createdAt: -1 });
 
-    res.json(bookings);
+    const uniqueBookings = Array.from(new Map(bookings.map(b => [b._id.toString(), b])).values());
+
+    res.json(uniqueBookings);
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
