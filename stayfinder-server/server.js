@@ -228,9 +228,39 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
 // Get all listings (with search and filters)
 app.get('/api/listings', async (req, res) => {
   try {
-    const { search, location, type, minPrice, maxPrice, guests, page = 1, limit = 12 } = req.query;
+    const { 
+      search, 
+      location, 
+      type, 
+      minPrice, 
+      maxPrice, 
+      guests, 
+      amenities, // new
+      startDate, // new
+      endDate,   // new
+      page = 1, 
+      limit = 12 
+    } = req.query;
     
     let query = { isActive: true };
+
+    //HANDLE DATE FILTERING 
+    if (startDate && endDate) {
+      const conflictingBookings = await Booking.find({
+        status: { $ne: 'cancelled' }, 
+        $or: [
+          { checkIn: { $lt: new Date(endDate), $gt: new Date(startDate) } },
+          { checkOut: { $lt: new Date(endDate), $gt: new Date(startDate) } },
+          { checkIn: { $lte: new Date(startDate) }, checkOut: { $gte: new Date(endDate) } }
+        ]
+      }).select('listing'); 
+
+      const unavailableListingIds = [...new Set(conflictingBookings.map(b => b.listing.toString()))];
+
+      if (unavailableListingIds.length > 0) {
+        query._id = { $nin: unavailableListingIds }; 
+      }
+    }
 
     // Search functionality
     if (search) {
@@ -259,6 +289,11 @@ app.get('/api/listings', async (req, res) => {
       query.guests = { $gte: Number(guests) };
     }
 
+    if (amenities) {
+      const amenitiesArray = amenities.split(',');
+      query.amenities = { $all: amenitiesArray };
+    }
+
     const skip = (page - 1) * limit;
     
     const listings = await Listing.find(query)
@@ -279,6 +314,7 @@ app.get('/api/listings', async (req, res) => {
       }
     });
   } catch (error) {
+    console.error("Error fetching listings:", error); // Added for better debugging
     res.status(500).json({ error: error.message });
   }
 });

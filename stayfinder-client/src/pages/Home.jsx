@@ -8,7 +8,7 @@ import { useListings } from '../hooks/useListings';
 
 const mapContainerStyle = {
   width: '100%',
-  height: '400px',
+  height: '100%', // Changed for better map responsiveness in its container
 };
 
 const centerDefault = {
@@ -24,10 +24,16 @@ const Home = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showFilters, setShowFilters] = useState(false);
   const [mapCenter, setMapCenter] = useState(centerDefault);
+  
+  // --- UPDATED STATE: Added date and price filters ---
   const [localFilters, setLocalFilters] = useState({
     guests: '',
     location: '',
     amenities: [],
+    startDate: '',
+    endDate: '',
+    minPrice: '',
+    maxPrice: '',
   });
 
   const location = searchParams.get('location') || '';
@@ -63,19 +69,33 @@ const Home = () => {
     });
   };
 
+  // --- UPDATED FUNCTION: applyFilters now includes date and price ---
   const applyFilters = () => {
     setFilters({
       guests: localFilters.guests,
       location: localFilters.location,
       amenities: localFilters.amenities.join(','),
+      startDate: localFilters.startDate,
+      endDate: localFilters.endDate,
+      minPrice: localFilters.minPrice,
+      maxPrice: localFilters.maxPrice,
     });
     setSearchParams({ location: localFilters.location });
     setShowFilters(false);
   };
 
+  // --- UPDATED FUNCTION: clearFilters now resets date and price ---
   const clearFilters = () => {
     setFilters({});
-    setLocalFilters({ guests: '', location: '', amenities: [] });
+    setLocalFilters({
+      guests: '',
+      location: '',
+      amenities: [],
+      startDate: '',
+      endDate: '',
+      minPrice: '',
+      maxPrice: '',
+    });
     setSearchParams({});
     setMapCenter(centerDefault);
   };
@@ -90,17 +110,21 @@ const Home = () => {
       const { lat, lng } = data.results[0].geometry.location;
       setMapCenter({ lat, lng });
     }
-  }, [location]);
+  }, [location, GOOGLE_MAPS_API]); // Added GOOGLE_MAPS_API to dependency array
 
   useEffect(() => {
     geocodeLocation();
   }, [geocodeLocation]);
 
+  // --- UPDATED LOGIC: activeFilterCount now checks for new filters ---
   const activeFilterCount = [
-    localFilters.guests && 1,
-    localFilters.location && 1,
-    localFilters.amenities.length > 0 && 1,
+    localFilters.guests,
+    localFilters.location,
+    localFilters.amenities.length > 0,
+    localFilters.startDate || localFilters.endDate,
+    localFilters.minPrice || localFilters.maxPrice,
   ].filter(Boolean).length;
+
 
   if (!isLoaded) return <div className="p-10 text-center">Loading ...</div>;
 
@@ -173,54 +197,115 @@ const Home = () => {
           </div>
         </div>
 
+        {/* --- UPDATED FILTER UI: New layout with date and price --- */}
         {showFilters && (
-          <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-white shadow-sm space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="mb-6 p-6 border border-gray-200 rounded-lg bg-white shadow-sm space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {/* Location Filter */}
               <div>
-                <label className="block mb-1 text-sm font-medium">Location</label>
+                <label className="block mb-2 text-sm font-medium">Location</label>
                 <input
                   type="text"
                   value={localFilters.location}
                   onChange={(e) => setLocalFilters({ ...localFilters, location: e.target.value })}
-                  placeholder="City or Area"
+                  placeholder="e.g. San Francisco"
                   className="w-full px-3 py-2 border rounded-md"
                 />
               </div>
+
+              {/* Guests Filter */}
               <div>
-                <label className="block mb-1 text-sm font-medium">Guests</label>
+                <label className="block mb-2 text-sm font-medium">Guests</label>
                 <input
                   type="number"
                   min="1"
                   value={localFilters.guests}
                   onChange={(e) => setLocalFilters({ ...localFilters, guests: e.target.value })}
+                  placeholder="Any"
                   className="w-full px-3 py-2 border rounded-md"
                 />
               </div>
-              <div>
-                <label className="block mb-1 text-sm font-medium">Amenities</label>
-                <div className="flex flex-wrap gap-2">
-                  {['wifi', 'parking', 'pool', 'tv', 'kitchen'].map((amenity) => (
-                    <label key={amenity} className="flex items-center space-x-1 text-sm">
-                      <input
-                        type="checkbox"
-                        value={amenity}
-                        checked={localFilters.amenities.includes(amenity)}
-                        onChange={handleAmenityChange}
-                      />
-                      <span>{amenity}</span>
-                    </label>
-                  ))}
+              
+              {/* Date Filters */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block mb-2 text-sm font-medium">Check-in</label>
+                  <input
+                    type="date"
+                    value={localFilters.startDate}
+                    onChange={(e) => setLocalFilters({ ...localFilters, startDate: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md text-gray-600"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-2 text-sm font-medium">Check-out</label>
+                  <input
+                    type="date"
+                    min={localFilters.startDate} // Prevents selecting end date before start date
+                    value={localFilters.endDate}
+                    onChange={(e) => setLocalFilters({ ...localFilters, endDate: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md text-gray-600"
+                  />
+                </div>
+              </div>
+
+              {/* Price Filters */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block mb-2 text-sm font-medium">Min Price</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={localFilters.minPrice}
+                    onChange={(e) => setLocalFilters({ ...localFilters, minPrice: e.target.value })}
+                    placeholder="$0"
+                    className="w-full px-3 py-2 border rounded-md"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-2 text-sm font-medium">Max Price</label>
+                  <input
+                    type="number"
+                    min={localFilters.minPrice || "0"}
+                    value={localFilters.maxPrice}
+                    onChange={(e) => setLocalFilters({ ...localFilters, maxPrice: e.target.value })}
+                    placeholder="$1000+"
+                    className="w-full px-3 py-2 border rounded-md"
+                  />
                 </div>
               </div>
             </div>
-            <button
-              onClick={applyFilters}
-              className="mt-4 px-6 py-2 bg-rose-500 text-white rounded-md hover:bg-rose-600 transition"
-            >
-              Apply Filters
-            </button>
+
+            {/* Amenities Filter */}
+            <div className="pt-4 border-t">
+              <label className="block mb-2 text-sm font-medium">Amenities</label>
+              <div className="flex flex-wrap gap-x-4 gap-y-2">
+                {['wifi', 'parking', 'pool', 'tv', 'kitchen'].map((amenity) => (
+                  <label key={amenity} className="flex items-center space-x-2 font-normal">
+                    <input
+                      type="checkbox"
+                      value={amenity}
+                      checked={localFilters.amenities.includes(amenity)}
+                      onChange={handleAmenityChange}
+                      className="rounded text-rose-500 focus:ring-rose-400"
+                    />
+                    <span className="capitalize">{amenity}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex justify-end">
+              <button
+                onClick={applyFilters}
+                className="px-6 py-2 bg-rose-500 text-white font-semibold rounded-md hover:bg-rose-600 transition-colors"
+              >
+                Apply Filters
+              </button>
+            </div>
           </div>
         )}
+
 
         {/* Property Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -239,7 +324,7 @@ const Home = () => {
               <Search className="w-12 h-12 text-gray-400" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No properties found</h3>
-            <p className="text-gray-600">Try adjusting your search criteria</p>
+            <p className="text-gray-600">Try adjusting your search or filter criteria.</p>
           </div>
         )}
       </div>
