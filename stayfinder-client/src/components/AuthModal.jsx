@@ -1,8 +1,16 @@
-import React, { useState, useContext } from 'react';
-import { X } from 'lucide-react';
+import React, { useState, useContext, useEffect } from 'react';
+import { X, Check } from 'lucide-react'; 
 import { AppContext } from '../context/AppContext';
 
 const API_URL = import.meta.env.VITE_API_URL;
+
+// --- Helper component for validation items ---
+const ValidationCriteria = ({ isValid, children }) => (
+  <li className={`flex items-center text-sm ${isValid ? 'text-green-600' : 'text-gray-500'}`}>
+    {isValid ? <Check className="w-4 h-4 mr-2" /> : <X className="w-4 h-4 mr-2" />}
+    {children}
+  </li>
+);
 
 const AuthModal = () => {
   const {
@@ -21,66 +29,103 @@ const AuthModal = () => {
     confirmPassword: ''
   });
 
+  const [passwordValidation, setPasswordValidation] = useState({
+    minLength: false,
+    hasUpper: false,
+    hasLower: false,
+    hasSpecial: false,
+  });
+  
+  const [showPasswordCriteria, setShowPasswordCriteria] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+    if (authMode === 'register') {
+      const { password } = formData;
+      const minLength = password.length >= 8;
+      const hasUpper = /[A-Z]/.test(password);
+      const hasLower = /[a-z]/.test(password);
+      const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+      setPasswordValidation({ minLength, hasUpper, hasLower, hasSpecial });
+    }
+  }, [formData.password, authMode]);
+
+
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
+  e.preventDefault();
+  setError('');
+  setIsLoading(true);
 
-    const { name, email, password, confirmPassword } = formData;
+  const { name, email, password, confirmPassword } = formData;
 
-    if (authMode === 'register' && password !== confirmPassword) {
-      setError('Passwords do not match');
+  if (authMode === 'register') {
+    const isPasswordValid = Object.values(passwordValidation).every(Boolean);
+    if (!isPasswordValid) {
+      setError('Password does not meet all the requirements.');
       setIsLoading(false);
       return;
     }
 
-    try {
-      const endpoint = authMode === 'login' ? 'login' : 'register';
-      const payload = authMode === 'login'
-        ? { email: email.toLowerCase(), password }
-        : { name, email: email.toLowerCase(), password };
-
-      const res = await fetch(`${API_URL}/api/auth/${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        const errorMessage = data.error || data.message || 'Authentication failed';
-        if (authMode === 'login' && [
-          'user not found',
-          'email not registered',
-          'no user found',
-          'invalid credentials'
-        ].some(msg => errorMessage.toLowerCase().includes(msg)) || res.status === 404) {
-          setAuthMode('register');
-          setError('Please register first to create your account');
-          setIsLoading(false);
-          return;
-        }
-        throw new Error(errorMessage);
-      }
-
-      setUser(data.user);
-      localStorage.setItem('token', data.token);
-      setToken(data.token);
-      setIsAuthModalOpen(false);
-      setFormData({ email: '', password: '', name: '', confirmPassword: '' });
-    } catch (err) {
-      setError(err.message);
-    } finally {
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
       setIsLoading(false);
+      return;
     }
-  };
+  }
+
+  try {
+    const endpoint = authMode === 'login' ? 'login' : 'register';
+    const payload = authMode === 'login'
+      ? { email: email.toLowerCase(), password }
+      : { name, email: email.toLowerCase(), password };
+
+    const res = await fetch(`${API_URL}/api/auth/${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      const errorMessage = data.error || data.message || 'Authentication failed';
+
+      const userNotFoundErrors = [
+        'user not found',
+        'email not registered',
+        'no user found',
+      ];
+
+      if (
+        authMode === 'login' &&
+        (userNotFoundErrors.some(msg => errorMessage.toLowerCase().includes(msg)) || res.status === 404)
+      ) {
+        setAuthMode('register');
+        setError('Email not found. Please register to create an account.'); // More specific error message
+        setIsLoading(false);
+        return;
+      }
+      throw new Error(errorMessage);
+    }
+
+    setUser(data.user);
+    localStorage.setItem('token', data.token);
+    setToken(data.token);
+    setIsAuthModalOpen(false);
+    setFormData({ email: '', password: '', name: '', confirmPassword: '' });
+
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleModeSwitch = () => {
     setAuthMode(authMode === 'login' ? 'register' : 'login');
     setError('');
+    setFormData({ email: '', password: '', name: '', confirmPassword: '' });
   };
 
   if (!isAuthModalOpen) return null;
@@ -137,10 +182,31 @@ const AuthModal = () => {
               required
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              // --- Show criteria on focus for register mode ---
+              onFocus={() => authMode === 'register' && setShowPasswordCriteria(true)}
+              onBlur={() => setShowPasswordCriteria(false)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500"
               disabled={isLoading}
             />
           </div>
+          
+          {/* --- Password Criteria Display --- */}
+          {authMode === 'register' && showPasswordCriteria && (
+            <ul className="mt-2 space-y-1 p-3 bg-gray-50 rounded-md">
+              <ValidationCriteria isValid={passwordValidation.minLength}>
+                At least 8 characters long
+              </ValidationCriteria>
+              <ValidationCriteria isValid={passwordValidation.hasLower}>
+                Contains a lowercase letter (a-z)
+              </ValidationCriteria>
+              <ValidationCriteria isValid={passwordValidation.hasUpper}>
+                Contains an uppercase letter (A-Z)
+              </ValidationCriteria>
+              <ValidationCriteria isValid={passwordValidation.hasSpecial}>
+                Contains a special character (!@#$...)
+              </ValidationCriteria>
+            </ul>
+          )}
 
           {authMode === 'register' && (
             <div>

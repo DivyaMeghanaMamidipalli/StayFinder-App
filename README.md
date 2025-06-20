@@ -97,7 +97,7 @@ npm run dev
 - Mock payment modal with inline form validation
 - Host dashboard to manage listings
 - Bookings view for both host and guest
-- Search and filters (location, amenities, guests)
+- Search and filters (location,price, date, amenities, guests)
 - Google Maps integration
 - Mobile responsive UI
 
