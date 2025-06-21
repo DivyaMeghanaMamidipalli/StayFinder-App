@@ -438,6 +438,36 @@ app.get('/api/host/listings', authenticateToken, async (req, res) => {
 
 // BOOKING ROUTES
 
+app.post('/api/bookings/check-availability', authenticateToken, async (req, res) => {
+  try {
+    const { listingId, checkInDate, checkOutDate } = req.body;
+
+    // Validate incoming data
+    if (!listingId || !checkInDate || !checkOutDate) {
+      return res.status(400).json({ message: 'Listing ID and dates are required.' });
+    }
+
+    const start = new Date(checkInDate);
+    const end = new Date(checkOutDate);
+    const conflictingBooking = await Booking.findOne({
+      listing: listingId,
+      status: { $ne: 'cancelled' }, 
+      checkIn: { $lt: end },
+      checkOut: { $gt: start }
+    });
+
+    if (conflictingBooking) {
+      return res.status(409).json({ message: 'Sorry, these dates are already booked.' });
+    }
+
+    res.status(200).json({ message: 'Dates are available.' });
+
+  } catch (error) {
+    console.error('Error checking availability:', error);
+    res.status(500).json({ message: 'Server error while checking availability.' });
+  }
+});
+
 // Create booking
 app.post('/api/bookings', authenticateToken, async (req, res) => {
   try {
